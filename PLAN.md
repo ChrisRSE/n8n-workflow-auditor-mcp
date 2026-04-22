@@ -35,13 +35,13 @@
 - `tests/rules/test_credentials.py` — pytest suite for CRED001–004
 
 ### Rules implemented and order rationale
-1. **CRED001** — Hardcoded credentials in node parameters  
+1. **CRED001** — Hardcoded credentials in node parameters
    Rationale: Highest user impact, clearest regex-based detection, validates the Rule base class pattern end-to-end.
-2. **CRED002** — Expired OAuth token detected  
+2. **CRED002** — Expired OAuth token detected
    Rationale: Requires understanding credential node structure (`credentials` key in node JSON), builds on CRED001's node iteration.
-3. **CRED003** — Credential referenced but not configured  
+3. **CRED003** — Credential referenced but not configured
    Rationale: Cross-references `nodes[].credentials` against `workflow.credentials` map; natural extension of CRED002's credential traversal.
-4. **CRED004** — Over-permissive API scope  
+4. **CRED004** — Over-permissive API scope
    Rationale: Most complex credential rule (node-type-aware scope lookup); placed last so the simpler rules are battle-tested first.
 
 ### MCP tools exposed
@@ -91,19 +91,19 @@ feat(tools): expose scan_credentials MCP tool
 - `docs/ruleset.md` — credential + webhook + error sections populated
 
 ### Rules implemented and order rationale
-1. **WEBHOOK001** — Inbound webhook without authentication  
+1. **WEBHOOK001** — Inbound webhook without authentication
    Rationale: Most common real-world issue; detected by checking Webhook node for absent `authentication` config.
-2. **WEBHOOK002** — Webhook → Code node chain without input validation  
+2. **WEBHOOK002** — Webhook → Code node chain without input validation
    Rationale: SSRF/RCE pattern; requires graph traversal (follow edges from Webhook node to Code node). Builds the graph-traversal utility other rules will reuse.
-3. **WEBHOOK003** — Webhook without rate limiting  
+3. **WEBHOOK003** — Webhook without rate limiting
    Rationale: Config-key check on the Webhook node; fast once graph traversal exists.
-4. **WEBHOOK004** — Webhook response exposes internal data  
+4. **WEBHOOK004** — Webhook response exposes internal data
    Rationale: Inspects the Respond to Webhook node's response body parameters for `$json` pass-through patterns.
-5. **ERR001** — Node has no error output routing  
+5. **ERR001** — Node has no error output routing
    Rationale: Per-node check; simplest error rule, high signal-to-noise.
-6. **ERR002** — Workflow has no top-level Error Trigger  
+6. **ERR002** — Workflow has no top-level Error Trigger
    Rationale: Workflow-level check (scan `nodes` for `n8n-nodes-base.errorTrigger`).
-7. **ERR003** — Error branch leads to silent failure  
+7. **ERR003** — Error branch leads to silent failure
    Rationale: Graph traversal from error outputs; reuses traversal utility from WEBHOOK002.
 
 ### MCP tools exposed
@@ -156,13 +156,13 @@ feat(tools): expose check_webhooks and error_handling_coverage MCP tools
 - `tests/test_tools.py` — integration test: `audit_workflow` end-to-end on a fixture JSON
 
 ### Rules implemented and order rationale
-1. **REL001** — HTTP Request node without retry config  
+1. **REL001** — HTTP Request node without retry config
    Rationale: Config-key check on `n8n-nodes-base.httpRequest` nodes; fast, no graph traversal. Good warm-up.
-2. **REL002** — Long-running workflow without explicit timeout  
+2. **REL002** — Long-running workflow without explicit timeout
    Rationale: Heuristic — flag workflows with HTTP Request or DB nodes in a loop without a Stop and Error node. Scoped conservatively.
-3. **DEPR001** — Node using deprecated `typeVersion`  
+3. **DEPR001** — Node using deprecated `typeVersion`
    Rationale: Static YAML lookup; straightforward once catalogue exists.
-4. **DEPR002** — Node type removed in current n8n version  
+4. **DEPR002** — Node type removed in current n8n version
    Rationale: Static YAML lookup; same mechanism as DEPR001.
 
 ### MCP tools exposed

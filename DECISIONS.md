@@ -84,3 +84,14 @@ Append-only log of architectural decisions made during this build. One entry per
 - **Alternatives considered:** (a) Bundle REL001/REL002 into `deprecations.py` — wrong semantically and harder to find. (b) Defer the fix to Session 4 when the file is created — creates a window where CLAUDE.md is wrong and Session 2 scaffolding would be inconsistent. (c) Patch CLAUDE.md now (chosen).
 - **Rationale:** CLAUDE.md is the source of truth for project structure. Fix it before any session reads it to scaffold files.
 - **Consequences:** CLAUDE.md is now accurate. Sessions 2–5 can scaffold from it without retrofitting.
+
+---
+
+## [DECISION-007] Pre-commit hooks with detect-secrets set up before any Python code is written
+
+- **Date:** 2026-04-22
+- **Decision:** Install pre-commit hooks (detect-secrets + standard safety checks) as a one-off setup task before Session 2, rather than waiting until secrets are first introduced in the codebase.
+- **Context:** The project will handle real n8n API keys and will audit workflows for credential hygiene. A secret leak in the repo would be an embarrassing contradiction for a project whose entire purpose is catching credential mistakes. Pre-commit hooks are cheap to add before there is any code and expensive to retrofit after a leak.
+- **Alternatives considered:** (a) Defer until Session 4 when the first real secrets (connector.py, .env) are introduced — lower urgency but misses the window when the cost is lowest. (b) Rely on .gitignore alone — passive protection only, no active scanning.
+- **Rationale:** Asymmetric downside: 15 minutes now prevents secret leaks that could take hours to scrub from git history and rotate credentials. Also serves as a portfolio signal — the repo demonstrates security-first practice from commit one.
+- **Consequences:** All future commits are scanned by detect-secrets against a baseline. New legitimate high-entropy strings (e.g., test fixture tokens) must be added to .secrets.baseline explicitly.

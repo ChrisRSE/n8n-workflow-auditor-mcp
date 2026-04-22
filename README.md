@@ -128,7 +128,20 @@ All commits are gated on a passing test suite. If the badge is green, the rules 
 
 ---
 
-## Contributing
+## For contributors
+
+After cloning, activate the pre-commit hooks so secret scanning and safety checks run on every commit:
+
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+To run the hooks manually against all files:
+
+```bash
+pre-commit run --all-files
+```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. The short version: add a rule, add a YAML descriptor, add a test with a violating fixture and a clean fixture, update [docs/ruleset.md](docs/ruleset.md), open a PR.
 

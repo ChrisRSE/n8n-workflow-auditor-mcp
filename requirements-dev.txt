@@ -1,0 +1,12 @@
+# Dev dependencies — unpinned until pyproject.toml is introduced in Session 2.
+# Install with: pip install -r requirements-dev.txt
+
+# Pre-commit and secret scanning
+pre-commit
+detect-secrets
+
+# Testing (Session 2+)
+pytest
+
+# Linting and formatting (Session 2+)
+ruff
