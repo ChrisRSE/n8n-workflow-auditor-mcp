@@ -1,0 +1,30 @@
+rules:
+  - id: REL001
+    severity: low
+    title: HTTP Request node without retry configuration
+    description: >
+      An HTTP Request node has no retry-on-failure configured. Transient network
+      errors or upstream rate limits will cause the node to fail immediately rather
+      than retrying, making workflows fragile in production environments.
+    remediation: >
+      Enable 'Retry On Fail' in the HTTP Request node settings and configure an
+      appropriate number of retries and wait time between attempts. For idempotent
+      requests, 2–3 retries with exponential backoff is a reasonable default.
+    references:
+      - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+
+  - id: REL002
+    severity: medium
+    title: Batch loop without a Stop and Error node
+    description: >
+      A SplitInBatches node is present but there is no Stop and Error node in the
+      workflow. Batch loops can run indefinitely if items are injected back into
+      the loop or if a bug causes the batch counter to reset. Without a Stop and
+      Error node, runaway loops consume execution capacity with no circuit breaker.
+    remediation: >
+      Add a Stop and Error node inside or after the batch loop to enforce a maximum
+      iteration count or error condition. Alternatively, add an IF node with a
+      counter check to break the loop under unexpected conditions.
+    references:
+      - https://docs.n8n.io/flow-logic/looping/
+      - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.stopanderror/
