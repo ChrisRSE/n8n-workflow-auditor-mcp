@@ -146,14 +146,18 @@ def _fix_rel001(finding: Finding, workflow: dict) -> dict:
 def _fix_depr001(finding: Finding, workflow: dict) -> dict:
     node = _find_node_by_id(workflow, finding.node_id)
     if node is None:
-        return _advisory_fix(finding, "Update the node typeVersion to the latest supported version.")
+        return _advisory_fix(
+            finding, "Update the node typeVersion to the latest supported version."
+        )
     node_type = node.get("type", "")
     entry = next(
         (e for e in _DEPR_CATALOGUE.get("deprecated_type_versions", []) if e["type"] == node_type),
         None,
     )
     if entry is None:
-        return _advisory_fix(finding, "Update the node typeVersion to the latest supported version.")
+        return _advisory_fix(
+            finding, "Update the node typeVersion to the latest supported version."
+        )
     current_version = entry["current_version"]
     return _node_diff_fix(
         finding,
@@ -170,14 +174,18 @@ def _fix_depr001(finding: Finding, workflow: dict) -> dict:
 def _fix_depr002(finding: Finding, workflow: dict) -> dict:
     node = _find_node_by_id(workflow, finding.node_id)
     if node is None:
-        return _advisory_fix(finding, "Replace this removed node type with the recommended replacement.")
+        return _advisory_fix(
+            finding, "Replace this removed node type with the recommended replacement."
+        )
     node_type = node.get("type", "")
     entry = next(
         (e for e in _DEPR_CATALOGUE.get("removed_node_types", []) if e["type"] == node_type),
         None,
     )
     if entry is None:
-        return _advisory_fix(finding, "Replace this removed node type with the recommended replacement.")
+        return _advisory_fix(
+            finding, "Replace this removed node type with the recommended replacement."
+        )
     replacement = entry["replacement"]
     return _node_diff_fix(
         finding,

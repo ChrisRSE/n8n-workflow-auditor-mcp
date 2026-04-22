@@ -3,7 +3,9 @@
 from n8n_auditor.report import build_markdown_report
 
 
-def _finding(rule_id: str, severity: str, node_name: str = "Node", message: str = "msg", evidence: str = "ev") -> dict:
+def _finding(
+    rule_id: str, severity: str, node_name: str = "Node", message: str = "msg", evidence: str = "ev"
+) -> dict:
     return {
         "rule_id": rule_id,
         "severity": severity,
@@ -55,5 +57,7 @@ def test_report_title_uses_workflow_name():
 
 
 def test_report_finding_message_included():
-    result = build_markdown_report([_finding("ERR001", "medium", message="No error routing configured")])
+    result = build_markdown_report(
+        [_finding("ERR001", "medium", message="No error routing configured")]
+    )
     assert "No error routing configured" in result

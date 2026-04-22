@@ -140,7 +140,9 @@ class WebhookExposesInternalData(Rule):
             if respond_with == "allEntries":
                 flagged = True
                 evidence_value = f"respondWith = {respond_with!r}"
-            elif isinstance(response_body, str) and response_body.strip() in self._BROAD_EXPRESSIONS:
+            elif (
+                isinstance(response_body, str) and response_body.strip() in self._BROAD_EXPRESSIONS
+            ):
                 flagged = True
                 evidence_value = f"responseBody = {response_body!r}"
 

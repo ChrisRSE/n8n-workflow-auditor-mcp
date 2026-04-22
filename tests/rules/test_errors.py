@@ -62,9 +62,7 @@ class TestErr001:
                 },
             ],
             "connections": {
-                "HTTP Request": {
-                    "error": [[{"node": "Notify Slack", "type": "main", "index": 0}]]
-                }
+                "HTTP Request": {"error": [[{"node": "Notify Slack", "type": "main", "index": 0}]]}
             },
         }
         findings = self.rule.check(workflow)
@@ -176,9 +174,7 @@ class TestErr003:
                 },
             ],
             "connections": {
-                "HTTP Request": {
-                    "error": [[{"node": "Notify Slack", "type": "main", "index": 0}]]
-                }
+                "HTTP Request": {"error": [[{"node": "Notify Slack", "type": "main", "index": 0}]]}
             },
         }
         findings = self.rule.check(workflow)

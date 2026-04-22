@@ -4,7 +4,9 @@ from n8n_auditor.fix_suggester import generate_fixes
 from n8n_auditor.rules.base import Finding, Severity
 
 
-def _finding(rule_id: str, severity: Severity, node_id: str | None, node_name: str | None) -> Finding:
+def _finding(
+    rule_id: str, severity: Severity, node_id: str | None, node_name: str | None
+) -> Finding:
     return Finding(
         rule_id=rule_id,
         severity=severity,
@@ -146,7 +148,9 @@ class TestDepr002Fix:
 class TestAdvisoryFallback:
     def test_cred001_returns_advisory(self):
         finding = _finding("CRED001", Severity.CRITICAL, "n1", "Node")
-        workflow = {"nodes": [{"id": "n1", "name": "Node", "type": "n8n-nodes-base.set", "parameters": {}}]}
+        workflow = {
+            "nodes": [{"id": "n1", "name": "Node", "type": "n8n-nodes-base.set", "parameters": {}}]
+        }
         fixes = generate_fixes([finding], workflow)
         assert fixes[0]["fix_type"] == "advisory"
         assert fixes[0]["before"] is None
@@ -180,7 +184,12 @@ def test_multiple_findings_returns_one_fix_each():
     ]
     workflow = {
         "nodes": [
-            {"id": "n1", "name": "Webhook", "type": "n8n-nodes-base.webhook", "parameters": {"authentication": "none"}},
+            {
+                "id": "n1",
+                "name": "Webhook",
+                "type": "n8n-nodes-base.webhook",
+                "parameters": {"authentication": "none"},
+            },
             {"id": "n2", "name": "HTTP", "type": "n8n-nodes-base.httpRequest", "parameters": {}},
         ]
     }

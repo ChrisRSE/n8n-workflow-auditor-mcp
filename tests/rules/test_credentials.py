@@ -1,6 +1,5 @@
 """Tests for credential hygiene rules CRED001–CRED004."""
 
-
 from n8n_auditor.rules.base import Severity
 from n8n_auditor.rules.credentials import (
     CredentialHardcoded,
@@ -240,9 +239,7 @@ class TestCred004:
                     "name": "Google Sheets",
                     "type": "n8n-nodes-base.googleSheets",
                     "parameters": {},
-                    "credentials": {
-                        "googleApi": {"id": "cred-1", "name": "Google API"}
-                    },
+                    "credentials": {"googleApi": {"id": "cred-1", "name": "Google API"}},
                 }
             ]
         }
@@ -260,9 +257,7 @@ class TestCred004:
                     "name": "Gmail",
                     "type": "n8n-nodes-base.gmail",
                     "parameters": {},
-                    "credentials": {
-                        "googleApi": {"id": "cred-1", "name": "Google API"}
-                    },
+                    "credentials": {"googleApi": {"id": "cred-1", "name": "Google API"}},
                 }
             ]
         }

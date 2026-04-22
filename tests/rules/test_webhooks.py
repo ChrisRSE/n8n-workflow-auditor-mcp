@@ -188,9 +188,7 @@ class TestWebhook003:
 
     def test_does_not_fire_on_workflow_with_no_webhook(self):
         workflow = {
-            "nodes": [
-                {"id": "n1", "name": "Set", "type": "n8n-nodes-base.set", "parameters": {}}
-            ]
+            "nodes": [{"id": "n1", "name": "Set", "type": "n8n-nodes-base.set", "parameters": {}}]
         }
         findings = self.rule.check(workflow)
         assert findings == []
@@ -254,9 +252,7 @@ class TestWebhook004:
 
     def test_does_not_fire_on_non_respond_node(self):
         workflow = {
-            "nodes": [
-                {"id": "n1", "name": "Set", "type": "n8n-nodes-base.set", "parameters": {}}
-            ]
+            "nodes": [{"id": "n1", "name": "Set", "type": "n8n-nodes-base.set", "parameters": {}}]
         }
         findings = self.rule.check(workflow)
         assert findings == []

@@ -71,8 +71,7 @@ class WorkflowNoErrorTrigger(Rule):
 
     def check(self, workflow: dict) -> list[Finding]:
         has_error_trigger = any(
-            node.get("type") == "n8n-nodes-base.errorTrigger"
-            for node in workflow.get("nodes", [])
+            node.get("type") == "n8n-nodes-base.errorTrigger" for node in workflow.get("nodes", [])
         )
         if has_error_trigger:
             return []

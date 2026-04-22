@@ -26,8 +26,7 @@ class NodeDeprecatedVersion(Rule):
     def __init__(self) -> None:
         catalogue = _load_catalogue()
         self._deprecated: dict[str, dict] = {
-            entry["type"]: entry
-            for entry in catalogue.get("deprecated_type_versions", [])
+            entry["type"]: entry for entry in catalogue.get("deprecated_type_versions", [])
         }
 
     def check(self, workflow: dict) -> list[Finding]:
@@ -80,8 +79,7 @@ class NodeTypeRemoved(Rule):
     def __init__(self) -> None:
         catalogue = _load_catalogue()
         self._removed: dict[str, dict] = {
-            entry["type"]: entry
-            for entry in catalogue.get("removed_node_types", [])
+            entry["type"]: entry for entry in catalogue.get("removed_node_types", [])
         }
 
     def check(self, workflow: dict) -> list[Finding]:

@@ -12,24 +12,24 @@ from .base import Finding, Rule, Severity
 
 # Known API-key prefixes that are unambiguous secrets
 _KNOWN_SECRET_PREFIXES: list[str] = [
-    "sk-",        # OpenAI / Stripe
-    "sk-proj-",   # OpenAI project keys
-    "ghp_",       # GitHub personal access token
-    "gho_",       # GitHub OAuth token
-    "ghu_",       # GitHub user-to-server token
-    "ghs_",       # GitHub server-to-server token
-    "ghr_",       # GitHub refresh token
-    "xoxb-",      # Slack bot token
-    "xoxp-",      # Slack user token
-    "xoxa-",      # Slack app token
-    "xoxs-",      # Slack socket token
-    "AKIA",       # AWS access key ID
-    "AIza",       # Google API key
-    "ya29.",      # Google OAuth2 access token
-    "eyJ",        # JWT (base64 header {"alg":...) — catches hardcoded JWTs
-    "SG.",        # SendGrid API key
-    "AC",         # Twilio Account SID (followed by 32 hex chars)
-    "SK",         # Twilio API key SID
+    "sk-",  # OpenAI / Stripe
+    "sk-proj-",  # OpenAI project keys
+    "ghp_",  # GitHub personal access token
+    "gho_",  # GitHub OAuth token
+    "ghu_",  # GitHub user-to-server token
+    "ghs_",  # GitHub server-to-server token
+    "ghr_",  # GitHub refresh token
+    "xoxb-",  # Slack bot token
+    "xoxp-",  # Slack user token
+    "xoxa-",  # Slack app token
+    "xoxs-",  # Slack socket token
+    "AKIA",  # AWS access key ID
+    "AIza",  # Google API key
+    "ya29.",  # Google OAuth2 access token
+    "eyJ",  # JWT (base64 header {"alg":...) — catches hardcoded JWTs
+    "SG.",  # SendGrid API key
+    "AC",  # Twilio Account SID (followed by 32 hex chars)
+    "SK",  # Twilio API key SID
 ]
 
 # Parameter names that strongly suggest the value is a secret
@@ -65,7 +65,7 @@ def _strip_auth_header_prefix(value: str) -> str:
     """Remove common HTTP auth header scheme words before checking for secret prefixes."""
     for prefix in _AUTH_HEADER_PREFIXES:
         if value.startswith(prefix):
-            return value[len(prefix):]
+            return value[len(prefix) :]
     return value
 
 
@@ -202,10 +202,14 @@ class CredentialOAuthExpiry(Rule):
                 if not self._is_oauth_type(cred_type):
                     continue
 
-                cred_name = cred_ref.get("name", cred_type) if isinstance(cred_ref, dict) else cred_type
+                cred_name = (
+                    cred_ref.get("name", cred_type) if isinstance(cred_ref, dict) else cred_type
+                )
 
                 # If credential data is embedded (unusual but possible in some exports)
-                token_data = cred_ref.get("oauthTokenData", {}) if isinstance(cred_ref, dict) else {}
+                token_data = (
+                    cred_ref.get("oauthTokenData", {}) if isinstance(cred_ref, dict) else {}
+                )
                 expiry = token_data.get("expiration_date") or token_data.get("expirationDate")
 
                 if expiry:
@@ -213,7 +217,7 @@ class CredentialOAuthExpiry(Rule):
                     from datetime import datetime
 
                     try:
-                        if isinstance(expiry, (int, float)):
+                        if isinstance(expiry, int | float):
                             exp_dt = datetime.fromtimestamp(expiry / 1000, tz=UTC)
                         else:
                             exp_dt = datetime.fromisoformat(str(expiry).replace("Z", "+00:00"))
