@@ -8,6 +8,7 @@ from n8n_auditor.tools import (
     detect_deprecations,
     error_handling_coverage,
     generate_audit_report,
+    scan_credentials,
     suggest_fixes,
 )
 
@@ -214,3 +215,40 @@ def test_generate_audit_report_empty_findings():
     result = generate_audit_report([])
     assert result["total_findings"] == 0
     assert "No findings" in result["report"]
+
+
+def test_generate_audit_report_uses_workflow_name():
+    result = generate_audit_report([], workflow_name="My Test Flow")
+    assert "My Test Flow" in result["report"]
+
+
+# ---------------------------------------------------------------------------
+# scan_credentials
+# ---------------------------------------------------------------------------
+
+
+def test_scan_credentials_returns_correct_keys():
+    result = scan_credentials(_fixture_path("hardcoded_secrets"))
+    assert {"findings", "summary", "total"} <= result.keys()
+
+
+def test_scan_credentials_finds_cred001():
+    result = scan_credentials(_fixture_path("hardcoded_secrets"))
+    rule_ids = [f["rule_id"] for f in result["findings"]]
+    assert "CRED001" in rule_ids
+
+
+def test_scan_credentials_only_cred_rules():
+    result = scan_credentials(_fixture_path("hardcoded_secrets"))
+    for f in result["findings"]:
+        assert f["rule_id"].startswith("CRED"), f"Unexpected rule: {f['rule_id']}"
+
+
+def test_scan_credentials_total_matches_findings():
+    result = scan_credentials(_fixture_path("hardcoded_secrets"))
+    assert result["total"] == len(result["findings"])
+
+
+def test_scan_credentials_error_on_bad_input():
+    result = scan_credentials('{"not_a_workflow": true}')
+    assert "error" in result
