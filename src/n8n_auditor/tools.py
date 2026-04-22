@@ -83,6 +83,7 @@ def scan_credentials(workflow_input: str) -> dict:
 # Stub tools — to be implemented in Sessions 3–5
 # ---------------------------------------------------------------------------
 
+
 def audit_workflow(workflow_input: str) -> dict:
     """Run all 15 audit rules against a workflow.
 
@@ -320,7 +321,9 @@ def suggest_fixes(finding_ids: list[str], workflow_input: str) -> dict:
     return {"fixes": fixes, "total": len(fixes)}
 
 
-def generate_audit_report(findings: list[dict], format: str = "md") -> dict:
+def generate_audit_report(
+    findings: list[dict], format: str = "md", workflow_name: str = ""
+) -> dict:
     """Generate a client-ready Markdown audit report.
 
     Groups findings by severity (critical → high → medium → low → info) and
@@ -331,6 +334,8 @@ def generate_audit_report(findings: list[dict], format: str = "md") -> dict:
         findings: List of finding dicts as returned by any audit tool's
             ``findings`` key.
         format: Output format — only ``"md"`` is supported.
+        workflow_name: Optional display name shown in the report title.
+            Defaults to ``"n8n Workflow"`` when omitted or empty.
 
     Returns:
         Dict with keys:
@@ -345,5 +350,5 @@ def generate_audit_report(findings: list[dict], format: str = "md") -> dict:
             "format": format,
             "total_findings": 0,
         }
-    report = build_markdown_report(findings)
+    report = build_markdown_report(findings, workflow_name=workflow_name or "n8n Workflow")
     return {"report": report, "format": "md", "total_findings": len(findings)}
