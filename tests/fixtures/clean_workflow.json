@@ -1,0 +1,65 @@
+{
+  "id": "clean-workflow-001",
+  "name": "Clean Workflow",
+  "nodes": [
+    {
+      "id": "node-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "hours", "hoursInterval": 1}]
+        }
+      }
+    },
+    {
+      "id": "node-http",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "parameters": {
+        "url": "https://api.example.com/data",
+        "method": "GET"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred-001",
+          "name": "Example API Header Auth"
+        }
+      }
+    },
+    {
+      "id": "node-set",
+      "name": "Set Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [650, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"name": "status", "value": "processed", "type": "string"}
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{"node": "HTTP Request", "type": "main", "index": 0}]]
+    },
+    "HTTP Request": {
+      "main": [[{"node": "Set Fields", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "credentials": {
+    "httpHeaderAuth": {
+      "id": "cred-001",
+      "name": "Example API Header Auth"
+    }
+  }
+}
