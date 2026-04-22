@@ -1,0 +1,26 @@
+# Skip heavyweight directories Claude doesn't need to read
+.venv/
+venv/
+env/
+.tmp/
+dist/
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+
+# Skip binaries and generated artifacts
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.mcpb
+*.coverage
+coverage.xml
+
+# Skip secrets (should never be read by Claude)
+.env
+credentials.json
+token.json
