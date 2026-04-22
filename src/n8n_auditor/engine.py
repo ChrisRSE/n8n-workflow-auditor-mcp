@@ -37,6 +37,8 @@ ALL_RULES: list[Rule] = [
     NodeTypeRemoved(),
 ]
 
+RULES_BY_ID: dict[str, Rule] = {rule.rule_id: rule for rule in ALL_RULES}
+
 
 @dataclass
 class AuditResult:
