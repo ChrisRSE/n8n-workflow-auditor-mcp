@@ -1,0 +1,43 @@
+rules:
+  - id: ERR001
+    severity: medium
+    title: Node has no error output connection
+    description: >
+      A non-trigger node has no error output branch configured. If this node
+      fails at runtime, the execution will halt silently with no opportunity to
+      notify operators, log the failure, or trigger a recovery path.
+    remediation: >
+      Add an error output connection from every action node to a notification
+      node (Slack, email) or at minimum a logging node. Consider also connecting
+      error branches to a central Error Trigger workflow.
+    references:
+      - https://docs.n8n.io/flow-logic/error-handling/
+
+  - id: ERR002
+    severity: high
+    title: Workflow has no Error Trigger node
+    description: >
+      No Error Trigger node is present in this workflow. Without one, failures
+      in sub-workflows or uncaught errors have no centralised handler, making
+      silent failures the default outcome.
+    remediation: >
+      Add an Error Trigger node connected to a notification or logging action.
+      n8n supports designating an error workflow at the instance level; this
+      rule checks that the current workflow includes its own handler.
+    references:
+      - https://docs.n8n.io/flow-logic/error-handling/
+
+  - id: ERR003
+    severity: medium
+    title: Error branch terminates at a noOp node (silent failure)
+    description: >
+      An error output connection leads directly to a No Operation (noOp) node,
+      which does nothing. This is structurally equivalent to swallowing the
+      error: the failure is acknowledged by the workflow designer but then
+      discarded without any logging, notification, or remediation action.
+    remediation: >
+      Replace the noOp terminal with a notification node (Slack, email, PagerDuty)
+      or a logging action. If the noOp is intentional, document the reasoning
+      with a Sticky Note node adjacent to it.
+    references:
+      - https://docs.n8n.io/flow-logic/error-handling/
