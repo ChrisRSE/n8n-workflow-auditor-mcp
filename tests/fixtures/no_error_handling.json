@@ -1,0 +1,62 @@
+{
+  "id": "no-error-handling-001",
+  "name": "No Error Handling Workflow",
+  "nodes": [
+    {
+      "id": "node-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "hours", "hoursInterval": 6}]
+        }
+      }
+    },
+    {
+      "id": "node-http",
+      "name": "Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "parameters": {
+        "url": "https://api.example.com/data",
+        "method": "GET"
+      }
+    },
+    {
+      "id": "node-set",
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [650, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"name": "processed", "value": "true", "type": "string"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-noop",
+      "name": "Silent Error Handler",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{"node": "Fetch Data", "type": "main", "index": 0}]]
+    },
+    "Fetch Data": {
+      "main": [[{"node": "Transform Data", "type": "main", "index": 0}]],
+      "error": [[{"node": "Silent Error Handler", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

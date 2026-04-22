@@ -1,0 +1,41 @@
+{
+  "id": "unauth-webhook-001",
+  "name": "Unauthenticated Webhook Workflow",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "payment-hook",
+        "httpMethod": "POST",
+        "authentication": "none",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      }
+    },
+    {
+      "id": "node-set",
+      "name": "Process Payment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"name": "status", "value": "received", "type": "string"}
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Process Payment", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {}
+}
