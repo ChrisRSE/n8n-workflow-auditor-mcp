@@ -1,10 +1,9 @@
-"""MCP tool implementations.
+"""MCP tool implementations."""
 
-scan_credentials is fully implemented.
-All other tools are stubs that return {status: not_implemented} so the
-server starts cleanly and Claude Desktop can discover the full tool list.
-"""
+import httpx
 
+from .connector import N8nConnector
+from .engine import run_audit
 from .parser import WorkflowParseError, parse_workflow
 from .rules.credentials import (
     CredentialHardcoded,
@@ -12,6 +11,7 @@ from .rules.credentials import (
     CredentialOAuthExpiry,
     CredentialOverPermissiveScope,
 )
+from .rules.deprecations import NodeDeprecatedVersion, NodeTypeRemoved
 from .rules.errors import (
     ErrorBranchSilentFailure,
     NodeNoErrorRouting,
@@ -81,12 +81,25 @@ def scan_credentials(workflow_input: str) -> dict:
 # Stub tools — to be implemented in Sessions 3–5
 # ---------------------------------------------------------------------------
 
-_NOT_IMPLEMENTED = {"status": "not_implemented"}
-
-
 def audit_workflow(workflow_input: str) -> dict:
-    """Run all audit rules against a workflow. (Implemented in Session 4.)"""
-    return _NOT_IMPLEMENTED
+    """Run all 15 audit rules against a workflow.
+
+    Args:
+        workflow_input: Absolute file path to a workflow JSON file, OR the raw
+            workflow JSON string.
+
+    Returns:
+        Dict with keys:
+        - ``findings``: list of finding dicts (rule_id, severity, node_id,
+          node_name, message, evidence)
+        - ``summary``: counts by severity
+        - ``total``: total finding count
+    """
+    try:
+        workflow = parse_workflow(workflow_input)
+    except WorkflowParseError as exc:
+        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
+    return run_audit(workflow).to_dict()
 
 
 def check_webhooks(workflow_input: str) -> dict:
@@ -136,8 +149,29 @@ def check_webhooks(workflow_input: str) -> dict:
 
 
 def detect_deprecations(workflow_input: str, n8n_version: str = "") -> dict:
-    """Detect deprecated or removed node types. (Implemented in Session 4.)"""
-    return _NOT_IMPLEMENTED
+    """Detect deprecated or removed node types.
+
+    Runs rules DEPR001–DEPR002:
+    - DEPR001: Node using a deprecated typeVersion
+    - DEPR002: Node type removed in current n8n version
+
+    Args:
+        workflow_input: Absolute file path to a workflow JSON file, OR the raw
+            workflow JSON string.
+        n8n_version: Optional n8n version string (currently unused; reserved for
+            future version-gated deprecation checks).
+
+    Returns:
+        Dict with keys:
+        - ``findings``: list of finding dicts
+        - ``summary``: counts by severity
+        - ``total``: total finding count
+    """
+    try:
+        workflow = parse_workflow(workflow_input)
+    except WorkflowParseError as exc:
+        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
+    return run_audit(workflow, rules=[NodeDeprecatedVersion(), NodeTypeRemoved()]).to_dict()
 
 
 def error_handling_coverage(workflow_input: str) -> dict:
@@ -213,15 +247,48 @@ def error_handling_coverage(workflow_input: str) -> dict:
 
 
 def analyse_instance(base_url: str, api_key: str) -> dict:
-    """Audit all workflows in a live n8n instance. (Implemented in Session 4.)"""
-    return _NOT_IMPLEMENTED
+    """Audit all workflows in a live n8n instance.
+
+    Fetches all workflows via the n8n REST API and runs the full rule set
+    against each. Does not call n8n's built-in /audit endpoint (see DECISION-003).
+
+    Args:
+        base_url: Base URL of the n8n instance (e.g. "https://n8n.example.com").
+        api_key: n8n API key (set via Settings → API in the n8n UI).
+
+    Returns:
+        Dict with keys:
+        - ``findings``: aggregated findings across all workflows
+        - ``summary``: counts by severity
+        - ``total``: total finding count
+        - ``workflow_count``: number of workflows audited
+    """
+    try:
+        workflows = N8nConnector(base_url, api_key).fetch_all_workflows()
+    except httpx.HTTPError as exc:
+        return {"error": str(exc), "findings": [], "summary": {}, "total": 0, "workflow_count": 0}
+
+    all_findings = []
+    for wf in workflows:
+        all_findings.extend(run_audit(wf).findings)
+
+    summary: dict[str, int] = {}
+    for f in all_findings:
+        summary[f.severity.value] = summary.get(f.severity.value, 0) + 1
+
+    return {
+        "findings": [f.to_dict() for f in all_findings],
+        "summary": summary,
+        "total": len(all_findings),
+        "workflow_count": len(workflows),
+    }
 
 
 def suggest_fixes(finding_ids: list[str], workflow_input: str) -> dict:
     """Generate before/after node diffs for listed finding IDs. (Implemented in Session 5.)"""
-    return _NOT_IMPLEMENTED
+    return {"status": "not_implemented"}
 
 
 def generate_audit_report(findings: list[dict], format: str = "md") -> dict:
     """Generate a client-ready audit report. (Implemented in Session 5.)"""
-    return _NOT_IMPLEMENTED
+    return {"status": "not_implemented"}
