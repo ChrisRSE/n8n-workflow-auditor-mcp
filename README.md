@@ -1,10 +1,14 @@
 # n8n Workflow Auditor MCP
 
+![CI](https://github.com/ChrisRSE/n8n-workflow-auditor-mcp/actions/workflows/ci.yml/badge.svg)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 **Find the security holes, missing error handling, and sloppy patterns in your n8n workflows — then let Claude suggest the fixes.**
 
 An MCP (Model Context Protocol) server that plugs into Claude Desktop or Claude Code and gives Claude the tools to audit n8n workflows: scanning for hardcoded credentials, unauthenticated webhooks, missing error handling, deprecated nodes, and reliability anti-patterns — then generating concrete, copy-pasteable fix suggestions.
 
-> **Status:** Active development. Session 1 (planning) complete. Core audit rules coming in Session 2.
+> **Status:** All 8 MCP tools implemented. 149 tests passing.
 
 ---
 
