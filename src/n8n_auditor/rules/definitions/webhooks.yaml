@@ -1,0 +1,56 @@
+rules:
+  - id: WEBHOOK001
+    severity: high
+    title: Inbound webhook without authentication
+    description: >
+      The Webhook node accepts inbound HTTP requests without requiring any
+      authentication. This allows any party who knows the webhook URL to trigger
+      the workflow, potentially enabling unauthorized execution or data injection.
+    remediation: >
+      Set the webhook's authentication parameter to 'headerAuth', 'basicAuth', or
+      another supported method. Rotate the webhook path to invalidate any existing
+      unauthorised knowledge of the URL.
+    references:
+      - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
+
+  - id: WEBHOOK002
+    severity: high
+    title: Webhook connects directly to Code node without input validation
+    description: >
+      A Webhook node passes its raw input directly to a Code node in a single hop
+      with no validation, sanitisation, or allow-listing node in between. Untrusted
+      webhook payloads reaching a Code node can lead to logic abuse or unexpected
+      behaviour (SSRF/RCE pattern).
+    remediation: >
+      Insert an IF, Switch, or Set node between the Webhook and Code nodes to
+      validate and sanitise incoming data before it reaches executable code.
+    references:
+      - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/
+
+  - id: WEBHOOK003
+    severity: low
+    title: Webhook node has no rate limiting
+    description: >
+      n8n does not provide native rate limiting on Webhook nodes. Any workflow
+      triggered by a webhook endpoint is potentially vulnerable to abuse through
+      high-volume requests, exhausting execution capacity or incurring cost overruns.
+    remediation: >
+      Implement rate limiting at the infrastructure layer (reverse proxy, API
+      gateway, or cloud load balancer) in front of the n8n instance.
+    references:
+      - https://docs.n8n.io/hosting/securing-n8n/
+
+  - id: WEBHOOK004
+    severity: medium
+    title: Webhook response exposes internal data
+    description: >
+      A RespondToWebhook node returns the full internal JSON payload
+      (e.g. responseBody="{{ $json }}" or respondWith="allEntries") to the
+      caller. This can leak internal field names, data structures, upstream
+      service responses, or credential fragments to external parties.
+    remediation: >
+      Construct an explicit response object using a Set node before
+      RespondToWebhook, selecting only the fields the caller requires.
+      Avoid returning $json wholesale.
+    references:
+      - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/
