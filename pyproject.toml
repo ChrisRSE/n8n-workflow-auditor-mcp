@@ -35,6 +35,13 @@ packages = ["src/n8n_auditor"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+addopts = "--cov=n8n_auditor --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
 
 [tool.ruff]
 target-version = "py311"
