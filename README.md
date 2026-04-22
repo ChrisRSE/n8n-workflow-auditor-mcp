@@ -133,7 +133,7 @@ All commits are gated on a passing test suite. If the badge is green, the rules 
 After cloning, activate the pre-commit hooks so secret scanning and safety checks run on every commit:
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 pre-commit install
 ```
 

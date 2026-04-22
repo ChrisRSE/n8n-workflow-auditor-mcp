@@ -95,3 +95,14 @@ Append-only log of architectural decisions made during this build. One entry per
 - **Alternatives considered:** (a) Defer until Session 4 when the first real secrets (connector.py, .env) are introduced — lower urgency but misses the window when the cost is lowest. (b) Rely on .gitignore alone — passive protection only, no active scanning.
 - **Rationale:** Asymmetric downside: 15 minutes now prevents secret leaks that could take hours to scrub from git history and rotate credentials. Also serves as a portfolio signal — the repo demonstrates security-first practice from commit one.
 - **Consequences:** All future commits are scanned by detect-secrets against a baseline. New legitimate high-entropy strings (e.g., test fixture tokens) must be added to .secrets.baseline explicitly.
+
+---
+
+## [DECISION-008] Consolidate dev dependencies into pyproject.toml; retire requirements-dev.txt
+
+- **Date:** 2026-04-22
+- **Decision:** Dev dependencies live in `pyproject.toml`'s `[project.optional-dependencies].dev` only. `requirements-dev.txt` is deleted.
+- **Context:** `requirements-dev.txt` was created in the security setup task before `pyproject.toml` existed. Now that Session 2 has introduced proper Python packaging, two dependency files is inconsistent and confusing.
+- **Alternatives considered:** (a) Keep both files in sync manually — error-prone, violates single-source-of-truth. (b) Use `requirements-dev.txt` as primary, auto-generate from `pyproject.toml` — overkill for a solo project. (c) `pyproject.toml` only (chosen).
+- **Rationale:** `pyproject.toml` is the modern Python packaging standard. Makes the project installable via `pip install -e ".[dev]"`. Eliminates dependency drift between two files.
+- **Consequences:** Anyone cloning the repo uses `pip install -e ".[dev]"`. `detect-secrets` and `pre-commit` now available inside the venv rather than relying on global installs.
