@@ -1,0 +1,21 @@
+snapshot_date: "2026-04-22"
+
+removed_node_types:
+  - type: "n8n-nodes-base.function"
+    removed_in: "1.0"
+    replacement: "n8n-nodes-base.code"
+    reason: "Replaced by the Code node (supports both 'Run Once for All Items' and 'Run Once for Each Item' modes)"
+  - type: "n8n-nodes-base.functionItem"
+    removed_in: "1.0"
+    replacement: "n8n-nodes-base.code"
+    reason: "Replaced by the Code node's 'Run Once for Each Item' mode"
+
+deprecated_type_versions:
+  - type: "n8n-nodes-base.httpRequest"
+    deprecated_below: 3
+    current_version: 4
+    reason: "typeVersion 1–2 lack retry-on-failure, pagination, and JSON schema validation"
+  - type: "n8n-nodes-base.set"
+    deprecated_below: 2
+    current_version: 3
+    reason: "typeVersion 1 uses dot-notation syntax; v2+ uses the assignment UI with type safety"
