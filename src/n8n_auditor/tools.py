@@ -3,8 +3,10 @@
 import httpx
 
 from .connector import N8nConnector
-from .engine import run_audit
+from .engine import RULES_BY_ID, run_audit
+from .fix_suggester import generate_fixes
 from .parser import WorkflowParseError, parse_workflow
+from .report import build_markdown_report
 from .rules.credentials import (
     CredentialHardcoded,
     CredentialNotConfigured,
@@ -285,10 +287,63 @@ def analyse_instance(base_url: str, api_key: str) -> dict:
 
 
 def suggest_fixes(finding_ids: list[str], workflow_input: str) -> dict:
-    """Generate before/after node diffs for listed finding IDs. (Implemented in Session 5.)"""
-    return {"status": "not_implemented"}
+    """Generate before/after node diffs for the specified finding rule IDs.
+
+    Parses the workflow, re-runs the rules matching the supplied rule IDs, then
+    returns a structured fix suggestion for each finding found.  Rules with a
+    clear parameter-level fix (WEBHOOK001, REL001, DEPR001, DEPR002) return a
+    ``modify_node`` diff with ``before`` / ``after`` node snapshots.  All other
+    rules return an ``advisory`` suggestion with human-readable instructions.
+
+    Args:
+        finding_ids: List of rule IDs to generate fixes for (e.g. ``["WEBHOOK001", "REL001"]``).
+        workflow_input: Absolute file path to a workflow JSON file, OR the raw
+            workflow JSON string.
+
+    Returns:
+        Dict with keys:
+        - ``fixes``: list of fix dicts (rule_id, node_id, node_name, description,
+          fix_type, before, after, instructions)
+        - ``total``: total fix count
+    """
+    try:
+        workflow = parse_workflow(workflow_input)
+    except WorkflowParseError as exc:
+        return {"error": str(exc), "fixes": [], "total": 0}
+
+    active_rules = [RULES_BY_ID[rid] for rid in finding_ids if rid in RULES_BY_ID]
+    if not active_rules:
+        return {"fixes": [], "total": 0}
+
+    audit_result = run_audit(workflow, rules=active_rules)
+    fixes = generate_fixes(audit_result.findings, workflow)
+    return {"fixes": fixes, "total": len(fixes)}
 
 
 def generate_audit_report(findings: list[dict], format: str = "md") -> dict:
-    """Generate a client-ready audit report. (Implemented in Session 5.)"""
-    return {"status": "not_implemented"}
+    """Generate a client-ready Markdown audit report.
+
+    Groups findings by severity (critical → high → medium → low → info) and
+    includes the remediation guidance for each rule.  Only Markdown output is
+    supported in v1 (see DECISION-005).
+
+    Args:
+        findings: List of finding dicts as returned by any audit tool's
+            ``findings`` key.
+        format: Output format — only ``"md"`` is supported.
+
+    Returns:
+        Dict with keys:
+        - ``report``: Markdown string
+        - ``format``: ``"md"``
+        - ``total_findings``: number of findings in the report
+    """
+    if format != "md":
+        return {
+            "error": f"Unsupported format '{format}'. Only 'md' is supported in v1.",
+            "report": "",
+            "format": format,
+            "total_findings": 0,
+        }
+    report = build_markdown_report(findings)
+    return {"report": report, "format": "md", "total_findings": len(findings)}
