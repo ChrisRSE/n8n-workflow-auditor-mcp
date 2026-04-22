@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Old HTTP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {}
+    },
+    {
+      "id": "n2",
+      "name": "Legacy Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "parameters": {}
+    }
+  ],
+  "connections": {}
+}
