@@ -7,6 +7,8 @@ from n8n_auditor.tools import (
     check_webhooks,
     detect_deprecations,
     error_handling_coverage,
+    generate_audit_report,
+    suggest_fixes,
 )
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -135,3 +137,80 @@ def test_check_webhooks_clean_workflow_no_webhook_findings():
     result = check_webhooks(_fixture_path("clean_workflow"))
     rule_ids = [f["rule_id"] for f in result["findings"]]
     assert not any(rid.startswith("WEBHOOK") for rid in rule_ids)
+
+
+# ---------------------------------------------------------------------------
+# suggest_fixes
+# ---------------------------------------------------------------------------
+
+
+def test_suggest_fixes_returns_correct_keys():
+    result = suggest_fixes(["WEBHOOK001"], _fixture_path("unauth_webhook"))
+    assert {"fixes", "total"} <= result.keys()
+
+
+def test_suggest_fixes_webhook001_returns_diff():
+    result = suggest_fixes(["WEBHOOK001"], _fixture_path("unauth_webhook"))
+    assert result["total"] > 0
+    fix = result["fixes"][0]
+    assert fix["fix_type"] == "modify_node"
+    assert "before" in fix and "after" in fix
+
+
+def test_suggest_fixes_after_has_header_auth():
+    result = suggest_fixes(["WEBHOOK001"], _fixture_path("unauth_webhook"))
+    fix = result["fixes"][0]
+    assert fix["after"]["parameters"]["authentication"] == "headerAuth"
+
+
+def test_suggest_fixes_error_on_bad_workflow():
+    result = suggest_fixes(["WEBHOOK001"], '{"not_a_workflow": true}')
+    assert "error" in result
+
+
+def test_suggest_fixes_empty_on_unknown_rule_ids():
+    result = suggest_fixes(["UNKNOWN999"], _fixture_path("clean_workflow"))
+    assert result["fixes"] == []
+    assert result["total"] == 0
+
+
+def test_suggest_fixes_rel001_on_deprecated_nodes():
+    result = suggest_fixes(["REL001"], _fixture_path("deprecated_nodes"))
+    assert result["total"] > 0
+    fix = result["fixes"][0]
+    assert fix["after"]["parameters"]["retryOnFail"] is True
+
+
+# ---------------------------------------------------------------------------
+# generate_audit_report
+# ---------------------------------------------------------------------------
+
+
+def test_generate_audit_report_returns_correct_keys():
+    findings = audit_workflow(_fixture_path("hardcoded_secrets"))["findings"]
+    result = generate_audit_report(findings)
+    assert {"report", "format", "total_findings"} <= result.keys()
+
+
+def test_generate_audit_report_returns_markdown_string():
+    findings = audit_workflow(_fixture_path("hardcoded_secrets"))["findings"]
+    result = generate_audit_report(findings)
+    assert isinstance(result["report"], str)
+    assert "# Audit Report" in result["report"]
+
+
+def test_generate_audit_report_total_findings_matches():
+    findings = audit_workflow(_fixture_path("hardcoded_secrets"))["findings"]
+    result = generate_audit_report(findings)
+    assert result["total_findings"] == len(findings)
+
+
+def test_generate_audit_report_unsupported_format_returns_error():
+    result = generate_audit_report([], format="pdf")
+    assert "error" in result
+
+
+def test_generate_audit_report_empty_findings():
+    result = generate_audit_report([])
+    assert result["total_findings"] == 0
+    assert "No findings" in result["report"]
