@@ -70,7 +70,7 @@ n8n-workflow-auditor-mcp/
 │       ├── engine.py            # rule engine orchestrator
 │       ├── parser.py            # n8n workflow JSON parsing
 │       ├── connector.py         # live n8n instance API client
-│       ├── report.py            # audit report generation (MD/PDF)
+│       ├── report.py            # audit report generation (MD/HTML)
 │       ├── rules/
 │       │   ├── __init__.py
 │       │   ├── base.py          # Rule base class
@@ -118,7 +118,7 @@ n8n-workflow-auditor-mcp/
 | `error_handling_coverage` | workflow JSON | Coverage % + per-node breakdown | Counts nodes with error output routing |
 | `analyse_instance` | base_url, api_key | Findings across all workflows in instance | Uses n8n's `/audit` + custom rules |
 | `suggest_fixes` | finding IDs | Patch-shaped JSON edits | Claude-assisted, requires finding context |
-| `generate_audit_report` | findings list, format (md/pdf) | Client-ready report file | Branded MD by default, optional PDF |
+| `generate_audit_report` | findings list, format (md/html) | Client-ready report file | Branded MD by default, optional HTML |
 
 ---
 

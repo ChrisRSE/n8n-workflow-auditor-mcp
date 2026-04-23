@@ -1,8 +1,13 @@
 """Integration tests for MCP tool functions."""
 
+import json
 from pathlib import Path
+from unittest.mock import patch
+
+import httpx
 
 from n8n_auditor.tools import (
+    analyse_instance,
     audit_workflow,
     check_webhooks,
     detect_deprecations,
@@ -267,3 +272,36 @@ def test_scan_credentials_total_matches_findings():
 def test_scan_credentials_error_on_bad_input():
     result = scan_credentials('{"not_a_workflow": true}')
     assert "error" in result
+
+
+# ---------------------------------------------------------------------------
+# analyse_instance
+# ---------------------------------------------------------------------------
+
+
+def test_analyse_instance_http_error_returns_error_key():
+    with patch("n8n_auditor.tools.N8nConnector") as MockConnector:
+        MockConnector.return_value.fetch_all_workflows.side_effect = httpx.HTTPError("timeout")
+        result = analyse_instance("https://n8n.example.com", "fake-key")
+    assert "error" in result
+    assert result["findings"] == []
+    assert result["workflow_count"] == 0
+
+
+def test_analyse_instance_empty_instance_returns_zero_totals():
+    with patch("n8n_auditor.tools.N8nConnector") as MockConnector:
+        MockConnector.return_value.fetch_all_workflows.return_value = []
+        result = analyse_instance("https://n8n.example.com", "fake-key")
+    assert result["total"] == 0
+    assert result["workflow_count"] == 0
+    assert result["findings"] == []
+
+
+def test_analyse_instance_aggregates_findings_across_workflows():
+    workflow = json.loads((FIXTURES_DIR / "hardcoded_secrets.json").read_text(encoding="utf-8"))
+    with patch("n8n_auditor.tools.N8nConnector") as MockConnector:
+        MockConnector.return_value.fetch_all_workflows.return_value = [workflow]
+        result = analyse_instance("https://n8n.example.com", "fake-key")
+    assert result["workflow_count"] == 1
+    assert result["total"] > 0
+    assert any(f["rule_id"] == "CRED001" for f in result["findings"])

@@ -8,7 +8,7 @@
 
 An MCP (Model Context Protocol) server that plugs into Claude Desktop or Claude Code and gives Claude the tools to audit n8n workflows: scanning for hardcoded credentials, unauthenticated webhooks, missing error handling, deprecated nodes, and reliability anti-patterns — then generating concrete, copy-pasteable fix suggestions.
 
-> **Status:** All 8 MCP tools implemented. 188 tests passing. 92.5% coverage.
+> **Status:** All 8 MCP tools implemented. 191 tests passing. 94.0% coverage.
 
 ---
 
@@ -61,7 +61,7 @@ Claude: [calls audit_workflow] Found 3 issues:
 | ID | Rule |
 |----|------|
 | REL001 | HTTP Request node without retry configuration |
-| REL002 | Long-running workflow without explicit timeout |
+| REL002 | Batch loop without a Stop and Error node |
 
 ---
 
