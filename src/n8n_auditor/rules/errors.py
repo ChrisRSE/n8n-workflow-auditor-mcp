@@ -10,7 +10,24 @@ _EXCLUDED_TYPES_EXACT: frozenset[str] = frozenset(
         "n8n-nodes-base.noOp",
         "n8n-nodes-base.manualTrigger",
         "n8n-nodes-base.errorTrigger",
+        "n8n-nodes-base.stickyNote",  # UI annotation — cannot fail at runtime
     }
+)
+
+# LangChain sub-nodes connect to AI Agent via sub-node connectors (ai_languageModel,
+# ai_memory, ai_tool, etc.) rather than the main execution graph. n8n does not expose
+# independent error outputs for them — errors bubble up to the parent AI Agent root node.
+# The agent itself (@n8n/n8n-nodes-langchain.agent) is NOT excluded and should fire ERR001.
+_EXCLUDED_LANGCHAIN_PREFIXES: tuple[str, ...] = (
+    "@n8n/n8n-nodes-langchain.lm",
+    "@n8n/n8n-nodes-langchain.memory",
+    "@n8n/n8n-nodes-langchain.embeddings",
+    "@n8n/n8n-nodes-langchain.outputParser",
+    "@n8n/n8n-nodes-langchain.tool",
+    "@n8n/n8n-nodes-langchain.documentLoader",
+    "@n8n/n8n-nodes-langchain.textSplitter",
+    "@n8n/n8n-nodes-langchain.vectorStore",
+    "@n8n/n8n-nodes-langchain.retriever",
 )
 
 
@@ -19,6 +36,8 @@ def _is_auditable_node(node_type: str) -> bool:
     if node_type in _EXCLUDED_TYPES_EXACT:
         return False
     if "trigger" in node_type.lower():
+        return False
+    if any(node_type.startswith(prefix) for prefix in _EXCLUDED_LANGCHAIN_PREFIXES):
         return False
     return True
 

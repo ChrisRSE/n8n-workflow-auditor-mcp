@@ -1,0 +1,65 @@
+{
+  "id": "langchain-workflow-001",
+  "name": "LangChain AI Agent Workflow",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Chat Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "parameters": {},
+      "position": [100, 200]
+    },
+    {
+      "id": "n2",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "parameters": {},
+      "position": [300, 200]
+    },
+    {
+      "id": "n3",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "parameters": {},
+      "position": [300, 350]
+    },
+    {
+      "id": "n4",
+      "name": "Window Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "parameters": {},
+      "position": [300, 450]
+    },
+    {
+      "id": "n5",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "parameters": {},
+      "position": [300, 550]
+    },
+    {
+      "id": "n6",
+      "name": "HTTP Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "parameters": {},
+      "position": [300, 650]
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [[{"node": "AI Agent", "type": "main", "index": 0}]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Window Memory": {
+      "ai_memory": [[{"node": "AI Agent", "type": "ai_memory", "index": 0}]]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [[{"node": "AI Agent", "type": "ai_outputParser", "index": 0}]]
+    },
+    "HTTP Tool": {
+      "ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+    }
+  }
+}

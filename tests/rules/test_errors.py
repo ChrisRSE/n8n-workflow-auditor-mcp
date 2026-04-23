@@ -42,6 +42,42 @@ class TestErr001:
         node_names = [f.node_name for f in findings]
         assert "Silent Error Handler" not in node_names
 
+    def test_does_not_fire_on_sticky_notes(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "s1",
+                    "name": "My Note",
+                    "type": "n8n-nodes-base.stickyNote",
+                    "parameters": {},
+                }
+            ],
+            "connections": {},
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+    def test_fires_on_langchain_agent_root_node(self):
+        workflow = load_fixture("langchain_workflow")
+        findings = self.rule.check(workflow)
+        node_names = [f.node_name for f in findings]
+        assert "AI Agent" in node_names
+
+    def test_does_not_fire_on_langchain_subnodes(self):
+        workflow = load_fixture("langchain_workflow")
+        findings = self.rule.check(workflow)
+        node_names = [f.node_name for f in findings]
+        assert "OpenAI Chat Model" not in node_names
+        assert "Window Memory" not in node_names
+        assert "Structured Output Parser" not in node_names
+        assert "HTTP Tool" not in node_names
+
+    def test_langchain_workflow_fires_only_on_agent(self):
+        workflow = load_fixture("langchain_workflow")
+        findings = self.rule.check(workflow)
+        assert len(findings) == 1
+        assert findings[0].node_name == "AI Agent"
+
     def test_does_not_fire_on_node_with_error_routing(self):
         # HTTP Request has error routing — it should not be flagged.
         # Slack has no error routing, so ERR001 fires for it (expected);
