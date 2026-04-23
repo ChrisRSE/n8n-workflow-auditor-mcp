@@ -118,6 +118,14 @@ def test_error_handling_coverage_finds_err_findings():
     assert any(rid.startswith("ERR") for rid in rule_ids)
 
 
+def test_error_handling_coverage_error_on_bad_input():
+    result = error_handling_coverage('{"not_a_workflow": true}')
+    assert "error" in result
+    assert result["findings"] == []
+    assert result["coverage"]["auditable_nodes"] == 0
+    assert result["coverage"]["coverage_percent"] == 0.0
+
+
 # ---------------------------------------------------------------------------
 # check_webhooks
 # ---------------------------------------------------------------------------
@@ -138,6 +146,13 @@ def test_check_webhooks_clean_workflow_no_webhook_findings():
     result = check_webhooks(_fixture_path("clean_workflow"))
     rule_ids = [f["rule_id"] for f in result["findings"]]
     assert not any(rid.startswith("WEBHOOK") for rid in rule_ids)
+
+
+def test_check_webhooks_error_on_bad_input():
+    result = check_webhooks('{"not_a_workflow": true}')
+    assert "error" in result
+    assert result["findings"] == []
+    assert result["total"] == 0
 
 
 # ---------------------------------------------------------------------------
