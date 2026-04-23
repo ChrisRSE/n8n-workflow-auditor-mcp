@@ -1,6 +1,6 @@
 """Error handling coverage rules: ERR001–ERR003."""
 
-from .base import Finding, Rule, Severity
+from .base import Finding, Rule, Severity, _build_name_to_type
 
 # Node types that do not need error output routing.
 # Trigger nodes can't "fail" in the actionable sense; noOp nodes are
@@ -98,9 +98,7 @@ class ErrorBranchSilentFailure(Rule):
 
     def check(self, workflow: dict) -> list[Finding]:
         findings: list[Finding] = []
-        name_to_type = {
-            node.get("name", ""): node.get("type", "") for node in workflow.get("nodes", [])
-        }
+        name_to_type = _build_name_to_type(workflow)
         connections = workflow.get("connections", {})
 
         for source_name, source_connections in connections.items():

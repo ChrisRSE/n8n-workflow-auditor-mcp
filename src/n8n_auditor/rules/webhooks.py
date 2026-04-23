@@ -1,11 +1,6 @@
 """Webhook security rules: WEBHOOK001–WEBHOOK004."""
 
-from .base import Finding, Rule, Severity
-
-
-def _build_name_to_type(workflow: dict) -> dict[str, str]:
-    """Return {node_name: node_type} lookup from workflow nodes list."""
-    return {node.get("name", ""): node.get("type", "") for node in workflow.get("nodes", [])}
+from .base import Finding, Rule, Severity, _build_name_to_type
 
 
 class WebhookNoAuth(Rule):

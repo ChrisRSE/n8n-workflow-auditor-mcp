@@ -33,6 +33,11 @@ class Finding:
         }
 
 
+def _build_name_to_type(workflow: dict) -> dict[str, str]:
+    """Return {node_name: node_type} lookup from workflow nodes list."""
+    return {node.get("name", ""): node.get("type", "") for node in workflow.get("nodes", [])}
+
+
 class Rule(ABC):
     """Base class for all audit rules.
 
