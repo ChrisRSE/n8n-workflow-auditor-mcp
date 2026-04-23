@@ -1,12 +1,17 @@
 """MCP tool implementations."""
 
+import re
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
 import httpx
 
 from .connector import N8nConnector
 from .engine import RULES_BY_ID, run_audit
 from .fix_suggester import generate_fixes
 from .parser import WorkflowParseError, parse_workflow
-from .report import build_markdown_report
+from .report import build_html_report, build_markdown_report
 from .rules.credentials import (
     CredentialHardcoded,
     CredentialNotConfigured,
@@ -324,31 +329,49 @@ def suggest_fixes(finding_ids: list[str], workflow_input: str) -> dict:
 def generate_audit_report(
     findings: list[dict], format: str = "md", workflow_name: str = ""
 ) -> dict:
-    """Generate a client-ready Markdown audit report.
+    """Generate a client-ready audit report in Markdown or HTML format.
 
     Groups findings by severity (critical → high → medium → low → info) and
-    includes the remediation guidance for each rule.  Only Markdown output is
-    supported in v1 (see DECISION-005).
+    includes the remediation guidance for each rule.
 
     Args:
         findings: List of finding dicts as returned by any audit tool's
             ``findings`` key.
-        format: Output format — only ``"md"`` is supported.
+        format: Output format — ``"md"`` for Markdown or ``"html"`` for a
+            self-contained HTML file written to the system temp directory.
         workflow_name: Optional display name shown in the report title.
             Defaults to ``"n8n Workflow"`` when omitted or empty.
 
     Returns:
         Dict with keys:
-        - ``report``: Markdown string
-        - ``format``: ``"md"``
+        - ``report``: report string (Markdown or HTML)
+        - ``format``: ``"md"`` or ``"html"``
         - ``total_findings``: number of findings in the report
+        - ``report_path``: (HTML only) absolute path to the written HTML file
     """
+    name = workflow_name or "n8n Workflow"
+
+    if format == "html":
+        report = build_html_report(findings, workflow_name=name)
+        safe_name = re.sub(r"[^\w\-]", "_", name)[:40]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"n8n_audit_{safe_name}_{timestamp}.html"
+        report_path = Path(tempfile.gettempdir()) / filename
+        report_path.write_text(report, encoding="utf-8")
+        return {
+            "report": report,
+            "format": "html",
+            "total_findings": len(findings),
+            "report_path": str(report_path),
+        }
+
     if format != "md":
         return {
-            "error": f"Unsupported format '{format}'. Only 'md' is supported in v1.",
+            "error": f"Unsupported format '{format}'. Supported formats: 'md', 'html'.",
             "report": "",
             "format": format,
             "total_findings": 0,
         }
-    report = build_markdown_report(findings, workflow_name=workflow_name or "n8n Workflow")
+
+    report = build_markdown_report(findings, workflow_name=name)
     return {"report": report, "format": "md", "total_findings": len(findings)}
