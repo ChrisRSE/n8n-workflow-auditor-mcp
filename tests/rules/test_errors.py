@@ -78,6 +78,89 @@ class TestErr001:
         assert len(findings) == 1
         assert findings[0].node_name == "AI Agent"
 
+    def test_does_not_fire_on_stop_and_error_nodes(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "s1",
+                    "name": "Stop and Error",
+                    "type": "n8n-nodes-base.stopAndError",
+                    "parameters": {},
+                }
+            ],
+            "connections": {},
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+    def test_does_not_fire_on_tool_subnodes(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "t1",
+                    "name": "Analyze Data",
+                    "type": "n8n-nodes-base.googleSheetsTool",
+                    "parameters": {},
+                },
+                {
+                    "id": "t2",
+                    "name": "Search Notion",
+                    "type": "n8n-nodes-base.notionTool",
+                    "parameters": {},
+                },
+            ],
+            "connections": {},
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+    def test_does_not_fire_when_continue_error_output_wired(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Send Email",
+                    "type": "n8n-nodes-base.gmail",
+                    "parameters": {},
+                    "onError": "continueErrorOutput",
+                },
+                {
+                    "id": "n2",
+                    "name": "Stop and Error",
+                    "type": "n8n-nodes-base.stopAndError",
+                    "parameters": {},
+                },
+            ],
+            "connections": {
+                "Send Email": {
+                    "main": [
+                        [],
+                        [{"node": "Stop and Error", "type": "main", "index": 0}],
+                    ]
+                }
+            },
+        }
+        findings = self.rule.check(workflow)
+        node_names = [f.node_name for f in findings]
+        assert "Send Email" not in node_names
+
+    def test_fires_when_continue_error_output_set_but_unwired(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Send Email",
+                    "type": "n8n-nodes-base.gmail",
+                    "parameters": {},
+                    "onError": "continueErrorOutput",
+                }
+            ],
+            "connections": {},
+        }
+        findings = self.rule.check(workflow)
+        node_names = [f.node_name for f in findings]
+        assert "Send Email" in node_names
+
     def test_does_not_fire_on_node_with_error_routing(self):
         # HTTP Request has error routing — it should not be flagged.
         # Slack has no error routing, so ERR001 fires for it (expected);

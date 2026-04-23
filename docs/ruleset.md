@@ -34,7 +34,7 @@ This document lists all 15 audit rules included in n8n Workflow Auditor MCP.
 
 | Rule ID | Severity | Title | Remediation summary |
 |---------|----------|-------|---------------------|
-| ERR001 | Medium | Node has no error output connection | Add an error output branch to a notification or logging node |
+| ERR001 | Medium | Node has no error output connection | Add an error output branch to a notification or logging node. **Excluded:** trigger nodes, `noOp`, `stickyNote`, `stopAndError`, LangChain sub-nodes (`lmChat*`, `memory*`, `outputParser*`, `tool*`, etc.), and `n8n-nodes-base.*Tool` AI agent tool nodes. **Satisfied by:** a wired `error` output, or `onError: continueErrorOutput` with a connected second main output. |
 | ERR002 | High | Workflow has no Error Trigger node | Add an Error Trigger node connected to a notification action |
 | ERR003 | Medium | Error branch terminates at a noOp node | Replace the noOp with a notification or logging action |
 
