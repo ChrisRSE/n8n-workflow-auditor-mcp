@@ -11,6 +11,7 @@ _EXCLUDED_TYPES_EXACT: frozenset[str] = frozenset(
         "n8n-nodes-base.manualTrigger",
         "n8n-nodes-base.errorTrigger",
         "n8n-nodes-base.stickyNote",  # UI annotation — cannot fail at runtime
+        "n8n-nodes-base.stopAndError",  # terminal node — halts execution by design
     }
 )
 
@@ -39,6 +40,10 @@ def _is_auditable_node(node_type: str) -> bool:
         return False
     if any(node_type.startswith(prefix) for prefix in _EXCLUDED_LANGCHAIN_PREFIXES):
         return False
+    # n8n-nodes-base.*Tool variants are sub-nodes for AI Agents (ai_tool connector)
+    # and cannot have independent error outputs
+    if node_type.startswith("n8n-nodes-base.") and node_type.endswith("Tool"):
+        return False
     return True
 
 
@@ -63,7 +68,14 @@ class NodeNoErrorRouting(Rule):
             node_name = node.get("name", "")
 
             node_connections = connections.get(node_name, {})
-            has_error_routing = bool(node_connections.get("error"))
+            # Traditional error output: separate "error" key in connections
+            has_error_key = bool(node_connections.get("error"))
+            # n8n "Continue (using error output)" mode: stores the error branch
+            # as main[1] and sets onError = "continueErrorOutput" on the node
+            on_error_mode = node.get("onError") == "continueErrorOutput"
+            main_slots = node_connections.get("main", [])
+            has_continue_output = on_error_mode and len(main_slots) > 1 and bool(main_slots[1])
+            has_error_routing = has_error_key or has_continue_output
 
             if not has_error_routing:
                 findings.append(
