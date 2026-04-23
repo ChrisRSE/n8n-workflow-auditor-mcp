@@ -8,7 +8,7 @@
 
 An MCP (Model Context Protocol) server that plugs into Claude Desktop or Claude Code and gives Claude the tools to audit n8n workflows: scanning for hardcoded credentials, unauthenticated webhooks, missing error handling, deprecated nodes, and reliability anti-patterns — then generating concrete, copy-pasteable fix suggestions.
 
-> **Status:** All 8 MCP tools implemented. 149 tests passing.
+> **Status:** All 8 MCP tools implemented. 166 tests passing. 92.6% coverage.
 
 ---
 
