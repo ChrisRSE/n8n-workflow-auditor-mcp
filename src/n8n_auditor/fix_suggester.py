@@ -16,25 +16,25 @@ _DEPR_CATALOGUE: dict = yaml.safe_load(
 
 _ADVISORY_TEXT: dict[str, str] = {
     "CRED001": (
-        "Move the hardcoded value into n8n's credential manager. "
+        "Move the hardcoded value in {node_name} into n8n's credential manager. "
         "Create a credential of the appropriate type and reference it in the node — "
         "never paste raw API keys into node parameter fields."
     ),
     "CRED002": (
-        "Re-authenticate the OAuth credential in the n8n credential manager to refresh the token. "
-        "Use analyse_instance for live expiry checks when n8n API access is available."
+        "Re-authenticate the OAuth credential used by {node_name} in the n8n credential manager "
+        "to refresh the token. Use analyse_instance for live expiry checks when n8n API access is available."
     ),
     "CRED003": (
-        "Open n8n Settings → Credentials and configure this credential. "
+        "Open n8n Settings → Credentials and configure the credential referenced by {node_name}. "
         "Then link it to the node via the credential selector in the node editor."
     ),
     "CRED004": (
-        "Replace the 'googleApi' credential with the service-specific OAuth2 credential "
+        "Replace the 'googleApi' credential on {node_name} with the service-specific OAuth2 credential "
         "(e.g. googleSheetsOAuth2Api for Google Sheets). "
         "This enforces least-privilege scope."
     ),
     "WEBHOOK002": (
-        "Insert an IF, Switch, or Set node between the Webhook and Code nodes "
+        "Insert an IF, Switch, or Set node between {node_name} and the Code node "
         "to validate and sanitise incoming data before it reaches executable code."
     ),
     "WEBHOOK003": (
@@ -43,11 +43,11 @@ _ADVISORY_TEXT: dict[str, str] = {
         "See https://docs.n8n.io/hosting/securing-n8n/ for guidance."
     ),
     "WEBHOOK004": (
-        "Construct an explicit response object using a Set node before RespondToWebhook, "
+        "Construct an explicit response object using a Set node before {node_name}, "
         "selecting only the fields the caller requires. Avoid returning $json wholesale."
     ),
     "ERR001": (
-        "Add an error output connection from this node to a notification node (Slack, email) "
+        "Add an error output connection from {node_name} to a notification node (Slack, email) "
         "or logging node. Configure it via the node's 'On Error' settings in the n8n editor."
     ),
     "ERR002": (
@@ -55,8 +55,8 @@ _ADVISORY_TEXT: dict[str, str] = {
         "This can live in a separate workflow designated as the instance-level error handler."
     ),
     "ERR003": (
-        "Replace the noOp terminal with a notification node (Slack, email, PagerDuty) "
-        "or a logging action so errors are not silently discarded."
+        "Replace the noOp terminal on the error branch from {node_name} with a notification node "
+        "(Slack, email, PagerDuty) or a logging action so errors are not silently discarded."
     ),
     "REL002": (
         "Add a Stop and Error node inside or after the SplitInBatches loop as a circuit breaker. "
@@ -105,6 +105,9 @@ def _node_diff_fix(
 
 
 def _advisory_fix(finding: Finding, instructions: str) -> dict:
+    name = finding.node_name
+    if name and "{node_name}" in instructions:
+        instructions = instructions.replace("{node_name}", f"'{name}'")
     return {
         "rule_id": finding.rule_id,
         "node_id": finding.node_id,
@@ -118,26 +121,28 @@ def _advisory_fix(finding: Finding, instructions: str) -> dict:
 
 
 def _fix_webhook001(finding: Finding, workflow: dict) -> dict:
+    name = finding.node_name or "this Webhook node"
     return _node_diff_fix(
         finding,
         workflow,
         patch={"parameters": {"authentication": "headerAuth"}},
-        description="Add header authentication to the Webhook node",
+        description=f"Add header authentication to '{name}'",
         instructions=(
-            "In the n8n editor, open this Webhook node and set Authentication to 'Header Auth'. "
+            f"In the n8n editor, open '{name}' and set Authentication to 'Header Auth'. "
             "Create a Header Auth credential with a strong, random token and share it only with trusted callers."
         ),
     )
 
 
 def _fix_rel001(finding: Finding, workflow: dict) -> dict:
+    name = finding.node_name or "this HTTP Request node"
     return _node_diff_fix(
         finding,
         workflow,
         patch={"parameters": {"retryOnFail": True, "maxTries": 3, "waitBetweenTries": 1000}},
-        description="Enable retry on failure (3 attempts, 1 s back-off)",
+        description=f"Enable retry on failure for '{name}' (3 attempts, 1 s back-off)",
         instructions=(
-            "In the HTTP Request node settings, enable 'Retry On Fail', set Max Tries to 3, "
+            f"In '{name}' settings, enable 'Retry On Fail', set Max Tries to 3, "
             "and Wait Between Tries to 1000 ms. Adjust based on the upstream API's rate limits."
         ),
     )
@@ -159,13 +164,14 @@ def _fix_depr001(finding: Finding, workflow: dict) -> dict:
             finding, "Update the node typeVersion to the latest supported version."
         )
     current_version = entry["current_version"]
+    name = finding.node_name or "this node"
     return _node_diff_fix(
         finding,
         workflow,
         patch={"typeVersion": current_version},
-        description=f"Upgrade typeVersion to {current_version}",
+        description=f"Upgrade '{name}' typeVersion to {current_version}",
         instructions=(
-            f"Open this node in the n8n editor and upgrade to typeVersion {current_version}. "
+            f"Open '{name}' in the n8n editor and upgrade to typeVersion {current_version}. "
             "n8n may offer a migration dialog when you open an outdated node."
         ),
     )
@@ -187,13 +193,14 @@ def _fix_depr002(finding: Finding, workflow: dict) -> dict:
             finding, "Replace this removed node type with the recommended replacement."
         )
     replacement = entry["replacement"]
+    name = finding.node_name or "this node"
     return _node_diff_fix(
         finding,
         workflow,
         patch={"type": replacement},
-        description=f"Replace removed node type with {replacement}",
+        description=f"Replace '{name}' (removed type) with '{replacement}'",
         instructions=(
-            f"Delete this node and replace it with a '{replacement}' node. "
+            f"Delete '{name}' and replace it with a '{replacement}' node. "
             "Recreate the node's logic using the Code node editor."
         ),
     )
