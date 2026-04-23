@@ -127,6 +127,27 @@ class TestDepr001Fix:
         fixes = generate_fixes([finding], _depr001_workflow())
         assert fixes[0]["fix_type"] == "modify_node"
 
+    def test_node_not_in_workflow_falls_back_to_advisory(self):
+        finding = _finding("DEPR001", Severity.MEDIUM, "missing-id", "Old HTTP")
+        fixes = generate_fixes([finding], {"nodes": []})
+        assert fixes[0]["fix_type"] == "advisory"
+
+    def test_unknown_node_type_falls_back_to_advisory(self):
+        finding = _finding("DEPR001", Severity.MEDIUM, "n1", "Unknown Node")
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Unknown Node",
+                    "type": "n8n-nodes-base.unknownNodeType",
+                    "typeVersion": 1,
+                    "parameters": {},
+                }
+            ]
+        }
+        fixes = generate_fixes([finding], workflow)
+        assert fixes[0]["fix_type"] == "advisory"
+
 
 class TestDepr002Fix:
     def test_changes_type_to_replacement(self):
@@ -143,6 +164,27 @@ class TestDepr002Fix:
         finding = _finding("DEPR002", Severity.HIGH, "n2", "Legacy Function")
         fixes = generate_fixes([finding], _depr002_workflow())
         assert fixes[0]["fix_type"] == "modify_node"
+
+    def test_node_not_in_workflow_falls_back_to_advisory(self):
+        finding = _finding("DEPR002", Severity.HIGH, "missing-id", "Legacy Function")
+        fixes = generate_fixes([finding], {"nodes": []})
+        assert fixes[0]["fix_type"] == "advisory"
+
+    def test_unknown_node_type_falls_back_to_advisory(self):
+        finding = _finding("DEPR002", Severity.HIGH, "n1", "Unknown Node")
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Unknown Node",
+                    "type": "n8n-nodes-base.unknownRemovedType",
+                    "typeVersion": 1,
+                    "parameters": {},
+                }
+            ]
+        }
+        fixes = generate_fixes([finding], workflow)
+        assert fixes[0]["fix_type"] == "advisory"
 
 
 class TestAdvisoryFallback:
