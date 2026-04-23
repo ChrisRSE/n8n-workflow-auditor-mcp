@@ -291,3 +291,110 @@ class TestCred004:
         workflow = load_fixture("clean_workflow")
         findings = self.rule.check(workflow)
         assert findings == []
+
+
+# ---------------------------------------------------------------------------
+# Edge cases — non-dict credential shapes
+# ---------------------------------------------------------------------------
+
+
+class TestCred002EdgeCases:
+    rule = CredentialOAuthExpiry()
+
+    def test_credentials_not_dict_is_skipped(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.gmail",
+                    "credentials": "not_a_dict",
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+    def test_cred_ref_not_dict_is_handled(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.gmail",
+                    "credentials": {"gmailOAuth2": "string_not_dict"},
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        rule_ids = [f.rule_id for f in findings]
+        assert "CRED002" in rule_ids
+
+    def test_invalid_expiry_format_does_not_raise(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.gmail",
+                    "credentials": {
+                        "gmailOAuth2": {
+                            "name": "cred1",
+                            "oauthTokenData": {"expirationDate": "not-a-valid-date"},
+                        }
+                    },
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        assert isinstance(findings, list)
+
+
+class TestCred003EdgeCases:
+    rule = CredentialNotConfigured()
+
+    def test_credentials_not_dict_is_skipped(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.gmail",
+                    "credentials": "not_a_dict",
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+    def test_cred_ref_not_dict_is_skipped(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.gmail",
+                    "credentials": {"gmailOAuth2": "string_not_dict"},
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
+
+
+class TestCred004EdgeCases:
+    rule = CredentialOverPermissiveScope()
+
+    def test_credentials_not_dict_is_skipped(self):
+        workflow = {
+            "nodes": [
+                {
+                    "id": "n1",
+                    "name": "Node",
+                    "type": "n8n-nodes-base.googleSheets",
+                    "credentials": "not_a_dict",
+                }
+            ]
+        }
+        findings = self.rule.check(workflow)
+        assert findings == []
