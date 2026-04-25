@@ -37,6 +37,71 @@ def _load_remediations() -> dict[str, str]:
 _REMEDIATIONS: dict[str, str] = _load_remediations()
 
 
+def build_text_summary(findings: list[dict], workflow_name: str = "n8n Workflow") -> str:
+    """Return a compact, consistently-formatted plain-text audit summary.
+
+    Designed to be embedded in every audit tool's return dict so Claude can
+    present it directly without interpreting raw JSON.
+    """
+    actionable = [f for f in findings if f.get("severity") != "info"]
+    notes = [f for f in findings if f.get("severity") == "info"]
+
+    fired_rule_ids = {f.get("rule_id") for f in actionable}
+    passes = len(_ALL_RULES) - len(fired_rule_ids)
+
+    header = f"── Audit: {workflow_name} ──"
+    lines: list[str] = [header]
+
+    if actionable:
+        counts = Counter(f.get("severity") for f in actionable)
+        parts = [f"{n} {sev}" for sev in _SEVERITY_ORDER[:-1] if (n := counts.get(sev, 0))]
+        status = "✗ ISSUES FOUND  (" + " · ".join(parts) + ")"
+    else:
+        status = "✓ CLEAN"
+
+    notes_suffix = f" · {len(notes)} info note{'s' if len(notes) != 1 else ''}" if notes else ""
+    lines.append(f"Status  : {status}")
+    lines.append(f"Rules   : {passes}/15 passed{notes_suffix}")
+
+    if actionable:
+        lines.append("")
+        lines.append("Findings:")
+        sev_label = {
+            "critical": "CRITICAL",
+            "high": "HIGH    ",
+            "medium": "MEDIUM  ",
+            "low": "LOW     ",
+        }
+        for f in sorted(actionable, key=lambda x: _SEVERITY_ORDER.index(x.get("severity", "info"))):
+            sev = f.get("severity", "info")
+            label = sev_label.get(sev, sev.upper().ljust(8))
+            rule_id = f.get("rule_id", "").ljust(10)
+            node = (f.get("node_name") or "(workflow)").ljust(18)[:18]
+            msg = f.get("message", "")
+            if len(msg) > 80:
+                msg = msg[:77] + "..."
+            lines.append(f"  [{label}]  {rule_id}  {node}  {msg}")
+    else:
+        lines.append("")
+        lines.append("No actionable findings.")
+
+    if notes:
+        lines.append("")
+        lines.append("Notes (informational only):")
+        for f in notes:
+            rule_id = f.get("rule_id", "")
+            node = f.get("node_name") or "(workflow)"
+            evidence = f.get("evidence", "")
+            cred_type = ""
+            if "Credential type:" in evidence:
+                cred_type = (
+                    " (" + evidence.split("Credential type:")[-1].split("|")[0].strip() + ")"
+                )
+            lines.append(f"  {rule_id}  {node}{cred_type}")
+
+    return "\n".join(lines)
+
+
 def build_markdown_report(findings: list[dict], workflow_name: str = "n8n Workflow") -> str:
     """Generate a Markdown audit report from a list of finding dicts.
 

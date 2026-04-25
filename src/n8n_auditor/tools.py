@@ -11,7 +11,7 @@ from .connector import N8nConnector
 from .engine import RULES_BY_ID, run_audit
 from .fix_suggester import generate_fixes
 from .parser import WorkflowParseError, parse_workflow
-from .report import build_html_report, build_markdown_report
+from .report import build_html_report, build_markdown_report, build_text_summary
 from .rules.credentials import (
     CredentialHardcoded,
     CredentialNotConfigured,
@@ -60,8 +60,15 @@ def scan_credentials(workflow_input: str) -> dict:
     try:
         workflow = parse_workflow(workflow_input)
     except WorkflowParseError as exc:
-        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
+        return {
+            "error": str(exc),
+            "findings": [],
+            "summary": {},
+            "total": 0,
+            "text_summary": f"Error: {exc}",
+        }
 
+    workflow_name = workflow.get("name", "n8n Workflow")
     rules = [
         CredentialHardcoded(),
         CredentialOAuthExpiry(),
@@ -77,10 +84,12 @@ def scan_credentials(workflow_input: str) -> dict:
     for f in findings:
         summary[f.severity.value] = summary.get(f.severity.value, 0) + 1
 
+    findings_dicts = [f.to_dict() for f in findings]
     return {
-        "findings": [f.to_dict() for f in findings],
+        "findings": findings_dicts,
         "summary": summary,
         "total": len(findings),
+        "text_summary": build_text_summary(findings_dicts, workflow_name),
     }
 
 
@@ -106,8 +115,18 @@ def audit_workflow(workflow_input: str) -> dict:
     try:
         workflow = parse_workflow(workflow_input)
     except WorkflowParseError as exc:
-        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
-    return run_audit(workflow).to_dict()
+        return {
+            "error": str(exc),
+            "findings": [],
+            "summary": {},
+            "total": 0,
+            "text_summary": f"Error: {exc}",
+        }
+    workflow_name = workflow.get("name", "n8n Workflow")
+    result = run_audit(workflow)
+    result_dict = result.to_dict()
+    result_dict["text_summary"] = build_text_summary(result_dict["findings"], workflow_name)
+    return result_dict
 
 
 def check_webhooks(workflow_input: str) -> dict:
@@ -132,8 +151,15 @@ def check_webhooks(workflow_input: str) -> dict:
     try:
         workflow = parse_workflow(workflow_input)
     except WorkflowParseError as exc:
-        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
+        return {
+            "error": str(exc),
+            "findings": [],
+            "summary": {},
+            "total": 0,
+            "text_summary": f"Error: {exc}",
+        }
 
+    workflow_name = workflow.get("name", "n8n Workflow")
     rules = [
         WebhookNoAuth(),
         WebhookDirectToCode(),
@@ -149,10 +175,12 @@ def check_webhooks(workflow_input: str) -> dict:
     for f in findings:
         summary[f.severity.value] = summary.get(f.severity.value, 0) + 1
 
+    findings_dicts = [f.to_dict() for f in findings]
     return {
-        "findings": [f.to_dict() for f in findings],
+        "findings": findings_dicts,
         "summary": summary,
         "total": len(findings),
+        "text_summary": build_text_summary(findings_dicts, workflow_name),
     }
 
 
@@ -178,8 +206,18 @@ def detect_deprecations(workflow_input: str, n8n_version: str = "") -> dict:
     try:
         workflow = parse_workflow(workflow_input)
     except WorkflowParseError as exc:
-        return {"error": str(exc), "findings": [], "summary": {}, "total": 0}
-    return run_audit(workflow, rules=[NodeDeprecatedVersion(), NodeTypeRemoved()]).to_dict()
+        return {
+            "error": str(exc),
+            "findings": [],
+            "summary": {},
+            "total": 0,
+            "text_summary": f"Error: {exc}",
+        }
+    workflow_name = workflow.get("name", "n8n Workflow")
+    result = run_audit(workflow, rules=[NodeDeprecatedVersion(), NodeTypeRemoved()])
+    result_dict = result.to_dict()
+    result_dict["text_summary"] = build_text_summary(result_dict["findings"], workflow_name)
+    return result_dict
 
 
 def error_handling_coverage(workflow_input: str) -> dict:
@@ -210,6 +248,7 @@ def error_handling_coverage(workflow_input: str) -> dict:
             "findings": [],
             "summary": {},
             "total": 0,
+            "text_summary": f"Error: {exc}",
             "coverage": {
                 "auditable_nodes": 0,
                 "nodes_with_error_routing": 0,
@@ -242,15 +281,25 @@ def error_handling_coverage(workflow_input: str) -> dict:
     routed_count = len(nodes_with_error_routing)
     coverage_pct = (routed_count / auditable_count * 100.0) if auditable_count > 0 else 0.0
 
+    workflow_name = workflow.get("name", "n8n Workflow")
+    findings_dicts = [f.to_dict() for f in findings]
+    coverage = {
+        "auditable_nodes": auditable_count,
+        "nodes_with_error_routing": routed_count,
+        "coverage_percent": round(coverage_pct, 1),
+    }
+    summary_text = build_text_summary(findings_dicts, workflow_name)
+    coverage_line = f"Coverage: {routed_count}/{auditable_count} nodes ({round(coverage_pct, 1)}%)"
+    summary_text = summary_text.replace(
+        f"── Audit: {workflow_name} ──",
+        f"── Audit: {workflow_name} ──\n{coverage_line}",
+    )
     return {
-        "findings": [f.to_dict() for f in findings],
+        "findings": findings_dicts,
         "summary": summary,
         "total": len(findings),
-        "coverage": {
-            "auditable_nodes": auditable_count,
-            "nodes_with_error_routing": routed_count,
-            "coverage_percent": round(coverage_pct, 1),
-        },
+        "text_summary": summary_text,
+        "coverage": coverage,
     }
 
 

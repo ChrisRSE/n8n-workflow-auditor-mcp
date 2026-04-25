@@ -305,3 +305,70 @@ def test_analyse_instance_aggregates_findings_across_workflows():
     assert result["workflow_count"] == 1
     assert result["total"] > 0
     assert any(f["rule_id"] == "CRED001" for f in result["findings"])
+
+
+# ---------------------------------------------------------------------------
+# text_summary
+# ---------------------------------------------------------------------------
+
+
+def test_audit_workflow_returns_text_summary():
+    result = audit_workflow(_fixture_path("hardcoded_secrets"))
+    assert "text_summary" in result
+    assert isinstance(result["text_summary"], str)
+
+
+def test_audit_workflow_text_summary_issues_found():
+    result = audit_workflow(_fixture_path("hardcoded_secrets"))
+    assert "ISSUES FOUND" in result["text_summary"]
+
+
+def test_audit_workflow_text_summary_clean():
+    from n8n_auditor.report import build_text_summary
+
+    summary = build_text_summary([], workflow_name="My Workflow")
+    assert "CLEAN" in summary
+    assert "ISSUES FOUND" not in summary
+
+
+def test_audit_workflow_text_summary_contains_workflow_name():
+    workflow = json.loads((FIXTURES_DIR / "hardcoded_secrets.json").read_text(encoding="utf-8"))
+    name = workflow.get("name", "")
+    result = audit_workflow(_fixture_path("hardcoded_secrets"))
+    if name:
+        assert name in result["text_summary"]
+
+
+def test_scan_credentials_returns_text_summary():
+    result = scan_credentials(_fixture_path("hardcoded_secrets"))
+    assert "text_summary" in result
+    assert "ISSUES FOUND" in result["text_summary"]
+
+
+def test_check_webhooks_returns_text_summary():
+    result = check_webhooks(_fixture_path("unauth_webhook"))
+    assert "text_summary" in result
+    assert isinstance(result["text_summary"], str)
+
+
+def test_detect_deprecations_returns_text_summary():
+    result = detect_deprecations(_fixture_path("deprecated_nodes"))
+    assert "text_summary" in result
+    assert isinstance(result["text_summary"], str)
+
+
+def test_error_handling_coverage_returns_text_summary():
+    result = error_handling_coverage(_fixture_path("no_error_handling"))
+    assert "text_summary" in result
+    assert "ISSUES FOUND" in result["text_summary"]
+
+
+def test_error_handling_coverage_text_summary_includes_coverage():
+    result = error_handling_coverage(_fixture_path("no_error_handling"))
+    assert "Coverage:" in result["text_summary"]
+
+
+def test_text_summary_error_path():
+    result = audit_workflow('{"not_a_workflow": true}')
+    assert "text_summary" in result
+    assert "Error" in result["text_summary"]

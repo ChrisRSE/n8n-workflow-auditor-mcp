@@ -65,14 +65,23 @@ Append-only log of architectural decisions made during this build. One entry per
 
 ---
 
-## [DECISION-005] PDF output cut from v1; generate_audit_report produces Markdown only
+## [DECISION-005] PDF output cut from v1; generate_audit_report produces Markdown and HTML
 
-- **Date:** 2026-04-22
-- **Decision:** `generate_audit_report` outputs Markdown only. PDF generation is not included in v1.
-- **Context:** PDF from Python typically requires weasyprint (heavy, OS libs), reportlab, fpdf2, or shelling to pandoc — each adding installation complexity.
-- **Alternatives considered:** (a) weasyprint — good CSS→PDF, but requires OS-level Cairo/Pango libs; complicates install instructions. (b) fpdf2 — lighter, but programmatic layout is verbose. (c) Markdown only (chosen).
-- **Rationale:** PDF adds heavy OS-level dependencies without adding demo value. The Loom checklist marks PDF as "Optional." Users who need PDF can pipe MD through pandoc themselves.
-- **Consequences:** CLAUDE.md tool table references "optional PDF" — to be updated manually after Session 1. Future enhancement: add `--pdf` flag once install story is cleaner.
+- **Date:** 2026-04-22 (updated 2026-04-24)
+- **Decision:** `generate_audit_report` outputs Markdown (`format="md"`) or self-contained HTML (`format="html"`). PDF is not included in v1.
+- **Context:** PDF from Python typically requires weasyprint (heavy, OS libs), reportlab, fpdf2, or shelling to pandoc — each adding installation complexity. HTML was added as a richer client-facing format without extra dependencies.
+- **Alternatives considered:** (a) weasyprint — good CSS→PDF, but requires OS-level Cairo/Pango libs; complicates install instructions. (b) fpdf2 — lighter, but programmatic layout is verbose. (c) Markdown + HTML (chosen).
+- **Rationale:** PDF adds heavy OS-level dependencies without adding demo value. HTML covers the client-facing report use case cleanly with zero extra dependencies.
+- **Consequences:** Future enhancement: add `--pdf` flag once install story is cleaner.
+
+## [DECISION-011] HTML reports do not auto-open in the browser
+
+- **Date:** 2026-04-24 (updated 2026-04-25)
+- **Decision:** `generate_audit_report` writes the HTML file and returns `report_path`. No browser launch is attempted. Audit results are presented as inline text in Claude's response.
+- **Context:** Three browser-open approaches were attempted and all failed: (a) `webbrowser.open()` — silently no-ops from a headless subprocess. (b) `os.startfile()` — same, no desktop session. (c) `subprocess.Popen(["cmd", "/c", "start", ...])` and Claude running `start` via Bash — also failed; both the MCP server process and Claude Code's Bash tool run in a context isolated from the user's desktop session.
+- **Alternatives considered:** (a) Local HTTP server serving reports on a fixed port — viable but adds complexity for marginal gain. (b) Save to Desktop for easy manual access — considered but not pursued. (c) Inline text output (chosen) — simpler, always works, no file management needed.
+- **Rationale:** The sandbox restrictions in Claude Code's VSCode extension make GUI launches unreliable. Inline markdown output in the chat is more immediate and universally accessible.
+- **Consequences:** HTML report generation still works and returns a `report_path`, but the primary output path is inline text. The HTML file can be opened manually if needed.
 
 ---
 

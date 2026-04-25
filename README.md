@@ -76,7 +76,7 @@ Claude: [calls audit_workflow] Found 3 issues:
 | `error_handling_coverage` | Coverage % + per-node error routing breakdown |
 | `analyse_instance` | Audit all workflows on a live n8n instance |
 | `suggest_fixes` | Get before/after node JSON for each finding |
-| `generate_audit_report` | Produce a client-ready Markdown report |
+| `generate_audit_report` | Produce a client-ready Markdown or HTML report (HTML writes to a temp file and returns the path) |
 
 ---
 
